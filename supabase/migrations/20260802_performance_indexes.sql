@@ -1,0 +1,39 @@
+-- Cover foreign keys used by joins, filters and cascading updates/deletes.
+-- Safe to re-run because every index is guarded with IF NOT EXISTS.
+
+create index if not exists activity_logs_actor_idx on public.activity_logs(actor_id);
+create index if not exists calendar_event_participants_profile_idx on public.calendar_event_participants(profile_id);
+create index if not exists calendar_events_created_by_idx on public.calendar_events(created_by);
+create index if not exists calendar_events_owner_idx on public.calendar_events(owner_id);
+create index if not exists company_settings_updated_by_idx on public.company_settings(updated_by);
+create index if not exists departments_created_by_idx on public.departments(created_by);
+create index if not exists employee_compensation_updated_by_idx on public.employee_compensation(updated_by);
+create index if not exists ideas_created_by_idx on public.ideas(created_by);
+create index if not exists packages_created_by_idx on public.packages(created_by);
+create index if not exists packages_updated_by_idx on public.packages(updated_by);
+create index if not exists payments_created_by_idx on public.payments(created_by);
+create index if not exists project_bonuses_project_idx on public.project_bonuses(project_id);
+create index if not exists project_comments_author_idx on public.project_comments(author_id);
+create index if not exists project_comments_project_idx on public.project_comments(project_id);
+create index if not exists project_files_project_idx on public.project_files(project_id);
+create index if not exists project_files_uploaded_by_idx on public.project_files(uploaded_by);
+create index if not exists project_finance_updated_by_idx on public.project_finance(updated_by);
+create index if not exists project_items_project_idx on public.project_items(project_id);
+create index if not exists project_members_added_by_idx on public.project_members(added_by);
+create index if not exists projects_created_by_idx on public.projects(created_by);
+create index if not exists projects_package_idx on public.projects(package_id);
+create index if not exists report_exports_generated_by_idx on public.report_exports(generated_by);
+create index if not exists report_exports_profile_idx on public.report_exports(profile_id);
+create index if not exists services_created_by_idx on public.services(created_by);
+create index if not exists services_updated_by_idx on public.services(updated_by);
+create index if not exists task_attachments_task_idx on public.task_attachments(task_id);
+create index if not exists task_attachments_uploaded_by_idx on public.task_attachments(uploaded_by);
+create index if not exists task_comments_author_idx on public.task_comments(author_id);
+create index if not exists task_comments_task_idx on public.task_comments(task_id);
+create index if not exists tasks_created_by_idx on public.tasks(created_by);
+create index if not exists tasks_department_idx on public.tasks(department_id);
+create index if not exists transactions_created_by_idx on public.transactions(created_by);
+create index if not exists transactions_profile_idx on public.transactions(profile_id);
+create index if not exists transactions_project_idx on public.transactions(project_id);
+create index if not exists user_permissions_granted_by_idx on public.user_permissions(granted_by);
+create index if not exists user_permissions_permission_idx on public.user_permissions(permission_id);

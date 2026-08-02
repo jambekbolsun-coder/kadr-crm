@@ -1,0 +1,16 @@
+import { useState } from 'react'
+import { Navigate, useLocation } from 'react-router-dom'
+import { KeyRound, LogIn } from 'lucide-react'
+import { supabase, isSupabaseConfigured, supabaseConfigError } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
+import { useToast } from '../contexts/ToastContext'
+import { Button, Field } from '../components/ui'
+
+export default function LoginPage() {
+  const { session, profile, loading }=useAuth(); const {toast}=useToast(); const location=useLocation()
+  const [email,setEmail]=useState(''); const [password,setPassword]=useState(''); const [busy,setBusy]=useState(false); const [forgot,setForgot]=useState(false)
+  const from=(location.state as any)?.from || '/dashboard'
+  if(!loading&&session&&profile) return <Navigate to={from} replace/>
+  async function submit(e:React.FormEvent){e.preventDefault();if(!isSupabaseConfigured){toast(supabaseConfigError || 'Supabase не настроен','error');return}setBusy(true);try{if(forgot){const redirectTo=`${window.location.origin}/reset-password`;const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo});if(error)throw error;toast('Ссылка восстановления отправлена на email','success')}else{const {error}=await supabase.auth.signInWithPassword({email,password});if(error)throw error}}catch(err:any){toast(err.message || 'Ошибка авторизации','error')}finally{setBusy(false)}}
+  return <div className="auth-page"><section className="auth-hero"><div><div className="brand"><span className="brand-mark">SK</span><span><strong>SMM_KADR</strong><small>MEDIA HOLDING · BISHKEK</small></span></div></div><div><div className="eyebrow">Внутренняя операционная система</div><h1>Команда.<br/>Проекты.<br/>Результат.</h1><p>У каждого проекта есть команда. У каждого сотрудника есть задачи. У каждой задачи есть срок. Вся работа и финансы собираются в одном месте.</p></div><small style={{color:'#66758b'}}>Доступ только по приглашению администратора.</small></section><section className="auth-panel"><form className="auth-card" onSubmit={submit}><div className="stat-icon" style={{marginBottom:14}}><KeyRound/></div><h2>{forgot?'Восстановить пароль':'Войти в систему'}</h2><p>{forgot?'Укажи рабочий email — мы отправим безопасную ссылку для нового пароля.':'Открытой регистрации нет. Аккаунты сотрудников создаёт только администратор.'}</p><div className="auth-form"><Field label="Email / логин"><input className="input" type="email" value={email} onChange={e=>setEmail(e.target.value)} required autoComplete="email" placeholder="name@company.kg"/></Field>{!forgot&&<Field label="Пароль"><input className="input" type="password" value={password} onChange={e=>setPassword(e.target.value)} required autoComplete="current-password" placeholder="••••••••"/></Field>}<Button type="submit" disabled={busy}>{forgot?<><KeyRound/>Отправить ссылку</>:<><LogIn/>Войти</>}{busy?'…':''}</Button><div className="auth-links"><button type="button" className="link-btn" onClick={()=>setForgot(v=>!v)}>{forgot?'Вернуться ко входу':'Восстановить пароль'}</button></div></div>{!isSupabaseConfigured&&<div className="config-warning">Supabase ещё не подключён. Добавь VITE_SUPABASE_URL и VITE_SUPABASE_ANON_KEY в Environment Variables Vercel и выполни Redeploy.</div>}</form></section></div>
+}

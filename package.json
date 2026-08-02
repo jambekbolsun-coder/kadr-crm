@@ -1,0 +1,43 @@
+{
+  "name": "smm-kadr-crm",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
+    "test": "vitest run",
+    "verify:syntax": "node scripts/verify-syntax.mjs",
+    "check": "npm run verify:syntax && npm run test && npm run build"
+  },
+  "dependencies": {
+    "@fullcalendar/core": "6.1.19",
+    "@fullcalendar/daygrid": "6.1.19",
+    "@fullcalendar/interaction": "6.1.19",
+    "@fullcalendar/react": "6.1.19",
+    "@fullcalendar/timegrid": "6.1.19",
+    "@supabase/supabase-js": "2.57.4",
+    "@tanstack/react-query": "5.90.2",
+    "date-fns": "4.1.0",
+    "lucide-react": "0.468.0",
+    "pdfmake": "0.2.20",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "react-router-dom": "7.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.32",
+    "@types/pdfmake": "0.2.11",
+    "@types/react": "19.1.13",
+    "@types/react-dom": "19.1.9",
+    "@vitejs/plugin-react": "5.0.3",
+    "typescript": "5.8.3",
+    "vite": "7.1.7",
+    "vitest": "3.2.4"
+  }
+}
