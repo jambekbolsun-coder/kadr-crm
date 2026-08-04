@@ -116,7 +116,7 @@ export async function getProject(id: string) {
 }
 
 export async function getTasks(mineProfileId?: string, projectId?: string) {
-  let q = supabase.from('tasks').select('*, project:projects(id,name), assignee:profiles(id,full_name,job_title,avatar_path)').order('due_at', { ascending: true, nullsFirst: false })
+  let q = supabase.from('tasks').select('*, project:projects!tasks_project_id_fkey(id,name), assignee:profiles!tasks_assignee_id_fkey(id,full_name,job_title,avatar_path)').order('due_at', { ascending: true, nullsFirst: false })
   if (mineProfileId) q = q.eq('assignee_id', mineProfileId)
   if (projectId) q = q.eq('project_id', projectId)
   const { data, error } = await q
