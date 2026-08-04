@@ -3,6 +3,47 @@ import type { CalendarEvent, Compensation, Department, Notification, Payment, Pr
 
 function throwIf(error: any) { if (error) throw error }
 
+const projectSelect = `
+  *,
+  project_finance(contract_price),
+  project_items(*),
+  project_bonuses(*),
+  project_members(
+    *,
+    profile:profiles!project_members_profile_id_fkey(
+      id,
+      full_name,
+      job_title,
+      avatar_path,
+      department_id
+    )
+  )
+`
+
+const projectDetailSelect = `
+  *,
+  project_finance(contract_price),
+  project_items(*),
+  project_bonuses(*),
+  project_members(
+    *,
+    profile:profiles!project_members_profile_id_fkey(
+      id,
+      full_name,
+      job_title,
+      avatar_path,
+      department_id,
+      email,
+      phone,
+      status,
+      system_role,
+      started_at,
+      created_at,
+      updated_at
+    )
+  )
+`
+
 export async function getDepartments(includeInactive = false) {
   let q = supabase.from('departments').select('*').order('name')
   if (!includeInactive) q = q.eq('active', true)
@@ -32,20 +73,46 @@ export async function getPackages(activeOnly = false) {
 
 export async function getProjects(mineProfileId?: string) {
   if (mineProfileId) {
-    const { data: memberships, error: mErr } = await supabase.from('project_members').select('project_id').eq('profile_id', mineProfileId)
+    const { data: memberships, error: mErr } = await supabase
+      .from('project_members')
+      .select('project_id')
+      .eq('profile_id', mineProfileId)
+
     throwIf(mErr)
+
     const ids = (memberships || []).map(x => x.project_id)
     if (!ids.length) return [] as Project[]
-    const { data, error } = await supabase.from('projects').select('*, project_finance(contract_price), project_items(*), project_bonuses(*), project_members(*, profile:profiles(id,full_name,job_title,avatar_path,department_id))').in('id', ids).is('archived_at', null).order('created_at', { ascending: false })
-    throwIf(error); return (data || []) as Project[]
+
+    const { data, error } = await supabase
+      .from('projects')
+      .select(projectSelect)
+      .in('id', ids)
+      .is('archived_at', null)
+      .order('created_at', { ascending: false })
+
+    throwIf(error)
+    return (data || []) as Project[]
   }
-  const { data, error } = await supabase.from('projects').select('*, project_finance(contract_price), project_items(*), project_bonuses(*), project_members(*, profile:profiles(id,full_name,job_title,avatar_path,department_id))').is('archived_at', null).order('created_at', { ascending: false })
-  throwIf(error); return (data || []) as Project[]
+
+  const { data, error } = await supabase
+    .from('projects')
+    .select(projectSelect)
+    .is('archived_at', null)
+    .order('created_at', { ascending: false })
+
+  throwIf(error)
+  return (data || []) as Project[]
 }
 
 export async function getProject(id: string) {
-  const { data, error } = await supabase.from('projects').select('*, project_finance(contract_price), project_items(*), project_bonuses(*), project_members(*, profile:profiles(id,full_name,job_title,avatar_path,department_id,email,phone,status,system_role,started_at,created_at,updated_at))').eq('id', id).single()
-  throwIf(error); return data as Project
+  const { data, error } = await supabase
+    .from('projects')
+    .select(projectDetailSelect)
+    .eq('id', id)
+    .single()
+
+  throwIf(error)
+  return data as Project
 }
 
 export async function getTasks(mineProfileId?: string, projectId?: string) {
@@ -103,19 +170,45 @@ export async function getTransactions(from?: string, to?: string) {
 export async function globalSearch(term: string) {
   const q = term.trim()
   if (q.length < 2) return [] as { type:string; id:string; title:string; sub:string; path:string }[]
+
   const pattern = `%${q}%`
-  // Avoid raw PostgREST `.or()` syntax here: punctuation in user input must never break the search request.
+
+  // Avoid raw PostgREST `.or()` syntax here:
+  // punctuation in user input must never break the search request.
   const p = supabase.from('profiles').select('id,full_name,job_title').ilike('full_name', pattern).limit(5)
   const prName = supabase.from('projects').select('id,name,client_name').ilike('name', pattern).limit(5)
   const prClient = supabase.from('projects').select('id,name,client_name').ilike('client_name', pattern).limit(5)
   const t = supabase.from('tasks').select('id,title,project_id').ilike('title', pattern).limit(5)
+
   const [a,bName,bClient,c] = await Promise.all([p,prName,prClient,t])
   for (const result of [a,bName,bClient,c]) throwIf(result.error)
+
   const projectMap = new Map<string, any>()
-  for (const row of [...(bName.data || []), ...(bClient.data || [])]) projectMap.set(row.id, row)
+  for (const row of [...(bName.data || []), ...(bClient.data || [])]) {
+    projectMap.set(row.id, row)
+  }
+
   return [
-    ...(a.data || []).map(x => ({ type:'Сотрудник', id:x.id, title:x.full_name, sub:x.job_title || '', path:`/employees?focus=${x.id}` })),
-    ...Array.from(projectMap.values()).slice(0,5).map(x => ({ type:'Проект', id:x.id, title:x.name, sub:x.client_name || '', path:`/projects/${x.id}` })),
-    ...(c.data || []).map(x => ({ type:'Задача', id:x.id, title:x.title, sub:'Открыть задачу', path:`/tasks?focus=${x.id}` })),
+    ...(a.data || []).map(x => ({
+      type:'Сотрудник',
+      id:x.id,
+      title:x.full_name,
+      sub:x.job_title || '',
+      path:`/employees?focus=${x.id}`,
+    })),
+    ...Array.from(projectMap.values()).slice(0,5).map(x => ({
+      type:'Проект',
+      id:x.id,
+      title:x.name,
+      sub:x.client_name || '',
+      path:`/projects/${x.id}`,
+    })),
+    ...(c.data || []).map(x => ({
+      type:'Задача',
+      id:x.id,
+      title:x.title,
+      sub:'Открыть задачу',
+      path:`/tasks?focus=${x.id}`,
+    })),
   ]
 }
